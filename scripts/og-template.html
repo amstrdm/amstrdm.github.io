@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  @font-face {
+    font-family: 'JBM';
+    src: url('file:///Users/amstrdm/coding/portfolio-amstrdm/node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2') format('woff2');
+    font-weight: 100 800;
+  }
+  @font-face {
+    font-family: 'SS4';
+    src: url('file:///Users/amstrdm/coding/portfolio-amstrdm/node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-400-normal.woff2') format('woff2');
+    font-weight: 400;
+  }
+  :root {
+    --bg: #15181a; --bg-deep: #0f1113; --fg: #e8e8e8; --fg-dim: #c8c8c8;
+    --muted: #8a8c8e; --faint: #6c7277; --gutter: #3a3f43; --line: #262b2f;
+    --mint: #4cbe9a; --blue: #7aa2dd; --orange: #d4a05e; --teal: #5fb3b3;
+    --red: #e67574; --purple: #b899d4;
+  }
+  * { margin: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'SS4', serif;
+    position: relative;
+    overflow: hidden;
+  }
+  .accentbar { position: absolute; left: 0; top: 0; bottom: 0; width: 8px; background: var(--ac); }
+  .gutter {
+    position: absolute; left: 52px; top: 84px;
+    font-family: 'JBM', monospace; font-size: 20px; color: var(--gutter);
+    line-height: 58px; text-align: right; width: 34px;
+  }
+  .content { position: absolute; left: 120px; right: 90px; top: 78px; }
+  .kicker {
+    font-family: 'JBM', monospace; font-size: 22px; font-weight: 500;
+    color: var(--ac); letter-spacing: 0.01em; margin-bottom: 26px;
+  }
+  .title {
+    font-family: 'JBM', monospace; font-weight: 700; color: var(--fg);
+    font-size: 72px; line-height: 1.08; letter-spacing: -0.02em;
+    max-width: 960px;
+  }
+  .title.small { font-size: 60px; }
+  .sub {
+    font-family: 'SS4', serif; font-size: 30px; line-height: 1.4;
+    color: var(--fg-dim); margin-top: 30px; max-width: 900px;
+  }
+  .statusline {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 56px;
+    background: var(--bg-deep); border-top: 1px solid var(--line);
+    display: flex; align-items: center; font-family: 'JBM', monospace; font-size: 18px;
+  }
+  .st-mode {
+    background: var(--mint); color: var(--bg-deep); font-weight: 700;
+    padding: 6px 18px; margin-right: 22px; letter-spacing: 0.06em; height: 100%;
+    display: flex; align-items: center;
+  }
+  .st-file { color: var(--fg-dim); }
+  .st-right { margin-left: auto; margin-right: 26px; color: var(--muted); }
+  .st-git { color: var(--teal); }
+</style>
+</head>
+<body>
+  <div class="accentbar"></div>
+  <div class="gutter">1<br>2<br>3<br>4<br>5</div>
+  <div class="content">
+    <div class="kicker" id="kicker"></div>
+    <div class="title" id="title"></div>
+    <div class="sub" id="sub"></div>
+  </div>
+  <div class="statusline">
+    <span class="st-mode">NORMAL</span>
+    <span class="st-file" id="file"></span>
+    <span class="st-right"><span class="st-git"> main</span> · github.com/amstrdm</span>
+  </div>
+  <script>
+    const p = new URLSearchParams(location.search);
+    const colors = { mint:'#4cbe9a', blue:'#7aa2dd', orange:'#d4a05e', teal:'#5fb3b3', red:'#e67574', purple:'#b899d4' };
+    const ac = colors[p.get('accent')] || colors.mint;
+    document.documentElement.style.setProperty('--ac', ac);
+    document.getElementById('kicker').textContent = p.get('kicker') || '';
+    const title = p.get('title') || '';
+    const tEl = document.getElementById('title');
+    tEl.textContent = title;
+    if (title.length > 26) tEl.classList.add('small');
+    document.getElementById('sub').textContent = p.get('sub') || '';
+    document.getElementById('file').textContent = p.get('file') || '~/caserta';
+  </script>
+</body>
+</html>
