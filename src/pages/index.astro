@@ -19,39 +19,41 @@ const heroLines = [
 
 const featured = [
   {
+    accent: 'orange',
+    kicker: 'research · python · 2025',
+    name: 'Polymarket efficiency study',
+    href: '/writeups/polymarket',
+    cta: 'Read the writeup',
+    blurb:
+      'I wanted to know whether Polymarket is inefficient enough to actually trade. Short answer: no. I came at it four ways — a microstructure signal, copying past winners, following smart-money flow, and front-running quiet skilled traders — and every one has a real edge before costs that dies once you pay the spread. The prices are well-calibrated and a skilled minority really does beat the crowd; you just can’t follow them. Most of the work went into not fooling myself.',
+    tags: ['Python', 'DuckDB', 'Dune / SQL', 'scikit-learn'],
+    links: [
+      { label: 'full writedown ↗', href: 'https://github.com/amstrdm/polymarket-efficiency/blob/main/WRITEUP.md' },
+    ],
+  },
+  {
     accent: 'blue',
     kicker: 'full-stack · python · live in production',
     name: 'Episteme',
+    href: '/writeups/episteme',
+    cta: 'Read the writeup',
     blurb:
       'Reads stock discussions off Reddit and Seeking Alpha and turns them into something you can actually use: the bull and bear case for a ticker, each argument scored and checked against what the comments say back. It started as my final Abitur research project (graded 15/15, the top mark) and now it’s live, running on a VPS. FastAPI backend, React frontend, and a Postgres database doing the semantic dedup.',
     tags: ['Python', 'FastAPI', 'PostgreSQL', 'React'],
     links: [
-      { label: 'writeup', href: '/writeups/episteme' },
-      { label: 'episteme.cloud', href: 'https://episteme.cloud' },
+      { label: 'episteme.cloud ↗', href: 'https://episteme.cloud' },
     ],
   },
   {
     accent: 'mint',
     kicker: 'firmware · my startup · 2026–present',
     name: 'Arrow',
+    href: 'https://github.com/amstrdm/dw3xxx-sdk-zephyr',
+    cta: 'View the open-source SDK port',
     blurb:
       'An embedded device that points you toward friends nearby over ultra-wideband and Bluetooth. I write the firmware — around 4,500 lines of C++20 on bare metal, built so the whole thing is mockable and I can test it off-device. The part I’m most proud of is the security: encrypted pairing, mutually-authenticated ranging, and defenses against people spoofing distance or relaying signals. The main repo is private while it’s early, but I open-sourced the UWB SDK port it runs on.',
     tags: ['C++20', 'Zephyr', 'nRF52', 'DW3000'],
-    links: [
-      { label: 'UWB SDK port (open source)', href: 'https://github.com/amstrdm/dw3xxx-sdk-zephyr' },
-    ],
-  },
-  {
-    accent: 'orange',
-    kicker: 'research · python · 2025',
-    name: 'Polymarket efficiency study',
-    blurb:
-      'I wanted to know whether Polymarket is inefficient enough to actually trade. Short answer: no. I came at it four ways — a microstructure signal, copying past winners, following smart-money flow, and front-running quiet skilled traders — and every one has a real edge before costs that dies once you pay the spread. The prices are well-calibrated and a skilled minority really does beat the crowd; you just can’t follow them. Most of the work went into not fooling myself.',
-    tags: ['Python', 'DuckDB', 'Dune / SQL', 'scikit-learn'],
-    links: [
-      { label: 'writeup', href: '/writeups/polymarket' },
-      { label: 'writedown', href: 'https://github.com/amstrdm/polymarket-efficiency/blob/main/WRITEUP.md' },
-    ],
+    links: [],
   },
 ];
 
@@ -159,7 +161,9 @@ const description =
         {featured.map((p) => (
           <article class={`project accent-${p.accent}`}>
             <header class="project-top">
-              <h3>{p.name}</h3>
+              <h3>
+                <a class="stretch" href={p.href} aria-label={`${p.name}: ${p.cta}`}>{p.name}</a>
+              </h3>
               <span class="kicker">{p.kicker}</span>
             </header>
             <p class="project-blurb">{p.blurb}</p>
@@ -167,11 +171,12 @@ const description =
               <ul class="tags">
                 {p.tags.map((t) => <li>{t}</li>)}
               </ul>
-              <ul class="plinks">
+              <div class="foot-links">
                 {p.links.map((l) => (
-                  <li><a href={l.href}>{l.label}</a></li>
+                  <a class="plink" href={l.href}>{l.label}</a>
                 ))}
-              </ul>
+                <span class="cta" aria-hidden="true">{p.cta} →</span>
+              </div>
             </div>
           </article>
         ))}
@@ -367,13 +372,15 @@ const description =
       color: var(--muted);
     }
 
-    /* ─── projects ─── */
+    /* ─── projects (whole card links to its writeup) ─── */
     .projects { display: grid; gap: 0; }
     .project {
-      padding: 1.8rem 0 1.8rem 1.6rem;
+      padding: 1.8rem 1rem 1.8rem 1.6rem;
       border-left: 2px solid var(--line);
       margin-left: 2px;
       position: relative;
+      cursor: pointer;
+      transition: background 0.15s ease;
     }
     .project + .project { border-top: 1px solid var(--line); }
     .project::before {
@@ -382,7 +389,10 @@ const description =
       left: -2px; top: 1.9rem;
       width: 2px; height: 1.4rem;
       background: var(--pc, var(--mint));
+      transition: top 0.15s ease, height 0.15s ease;
     }
+    .project:hover { background: var(--surface); }
+    .project:hover::before { top: 1.8rem; height: calc(100% - 3.6rem); }
     .accent-mint   { --pc: var(--mint); }
     .accent-blue   { --pc: var(--blue); }
     .accent-orange { --pc: var(--orange); }
@@ -400,8 +410,17 @@ const description =
     .project-top h3 {
       font-size: 1.15rem;
       margin: 0;
-      color: var(--fg);
       font-weight: 500;
+    }
+    /* stretched link: the title is the real anchor, its ::after covers the card */
+    .stretch { color: var(--fg); text-decoration: none; transition: color 0.15s ease; }
+    .stretch::after { content: ''; position: absolute; inset: 0; z-index: 1; }
+    .project:hover .stretch { color: var(--pc); }
+    .stretch:focus-visible { outline: none; }
+    .stretch:focus-visible::after {
+      outline: 2px solid var(--pc);
+      outline-offset: 3px;
+      border-radius: 4px;
     }
     .project .kicker {
       font-family: var(--mono);
@@ -416,7 +435,7 @@ const description =
       gap: 0.8rem 1.5rem;
       align-items: baseline;
     }
-    .tags, .plinks { list-style: none; display: flex; flex-wrap: wrap; gap: 0.5rem 0.9rem; margin: 0; padding: 0; }
+    .tags { list-style: none; display: flex; flex-wrap: wrap; gap: 0.5rem 0.9rem; margin: 0; padding: 0; }
     .tags li {
       font-family: var(--mono);
       font-size: 0.72rem;
@@ -424,8 +443,19 @@ const description =
     }
     .tags li::before { content: '· '; color: var(--gutter); }
     .tags li:first-child::before { content: ''; }
-    .plinks li { font-family: var(--mono); font-size: 0.76rem; }
-    .plinks a { color: var(--pc, var(--mint)); }
+    .foot-links {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.5rem 1.1rem;
+      font-family: var(--mono);
+      font-size: 0.76rem;
+    }
+    /* secondary links sit above the stretched overlay so they stay clickable */
+    .plink { color: var(--muted); position: relative; z-index: 2; }
+    .plink:hover { color: var(--pc); }
+    .cta { color: var(--pc, var(--mint)); font-weight: 500; white-space: nowrap; }
+    .project:hover .cta { text-decoration: underline; text-underline-offset: 3px; }
 
     /* ─── writeups ─── */
     .writeup-list { list-style: none; margin: 0; padding: 0; }

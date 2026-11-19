@@ -13,7 +13,7 @@ aiNote: >-
   I did the research and wrote the original notes and text myself; I used AI to
   tighten the prose on this page so it reads more smoothly. The analysis,
   decisions and conclusions are mine.
-order: 2
+order: 1
 ---
 
 People clearly make consistent money on Polymarket. So is the market actually

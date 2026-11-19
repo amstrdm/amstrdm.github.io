@@ -14,7 +14,7 @@ aiNote: >-
   I wrote the research, the notes and the original text myself; I used AI to
   tighten the prose on this page so it reads more smoothly. The full writedown
   linked above is entirely my own writing, with no AI involved.
-order: 1
+order: 2
 ---
 
 Episteme was my final Abitur research project, graded 15/15 (the top mark). The
