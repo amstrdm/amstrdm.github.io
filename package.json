@@ -1,0 +1,17 @@
+{
+  "name": "portfolio-amstrdm",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "@fontsource-variable/jetbrains-mono": "^5.1.1",
+    "@fontsource/source-serif-4": "^5.1.0",
+    "astro": "^5.2.5"
+  }
+}

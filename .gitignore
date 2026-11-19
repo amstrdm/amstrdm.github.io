@@ -1,0 +1,16 @@
+# build output
+dist/
+# dependencies
+node_modules/
+# generated types
+.astro/
+# environment
+.env
+.env.production
+# local editor / tooling config
+.claude/
+
+# macOS
+.DS_Store
+# logs
+npm-debug.log*
