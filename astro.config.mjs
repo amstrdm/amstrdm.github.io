@@ -1,9 +1,9 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 
-// User page: served from the domain root (amstrdm.github.io), so no base path.
+// Custom domain, served from the root, so no base path.
 export default defineConfig({
-  site: 'https://amstrdm.github.io',
+  site: 'https://amstrdm.dev',
   base: '/',
   trailingSlash: 'ignore',
   build: { format: 'directory' },

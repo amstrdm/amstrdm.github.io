@@ -1,4 +1,4 @@
-# amstrdm.github.io
+# amstrdm.dev
 
 My personal portfolio. A static site built with [Astro](https://astro.build),
 painted in [`dutchpro`](https://github.com/amstrdm/dutchpro) — the Neovim
@@ -45,5 +45,6 @@ Pushing to `main` triggers `.github/workflows/deploy.yml`, which builds and
 publishes to GitHub Pages. In the repo settings, set **Settings → Pages →
 Build and deployment → Source** to **GitHub Actions** once.
 
-Because this is a user page served from the domain root
-(`https://amstrdm.github.io`), `astro.config.mjs` uses `base: '/'`.
+Served from the custom domain root (`https://amstrdm.dev`), so `astro.config.mjs`
+uses `base: '/'` and `public/CNAME` pins the domain into the build artifact (the
+Actions deploy doesn't commit a CNAME on its own).
