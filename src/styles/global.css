@@ -1,0 +1,133 @@
+/* ------------------------------------------------------------------ *
+ *  dutchpro — Antonio Caserta's own Neovim colorscheme, as a website. *
+ *  Palette values are lifted verbatim from dutchpro/lua/.../colors.lua *
+ * ------------------------------------------------------------------ */
+
+:root {
+  /* surfaces */
+  --bg:        #15181a;
+  --bg-deep:   #0f1113;
+  --surface:   #1a1e20;
+  --surface-2: #1e2226;
+  --line:      #262b2f;
+
+  /* text */
+  --fg:        #e8e8e8;
+  --fg-dim:    #c8c8c8;
+  --muted:     #8a8c8e;
+  --faint:     #6c7277;
+  --gutter:    #4d5358;
+
+  /* accents (syntax colors from the theme) */
+  --mint:      #4cbe9a;
+  --teal:      #5fb3b3;
+  --blue:      #7aa2dd;
+  --cyan:      #6ba3d4;
+  --orange:    #d4a05e;
+  --yellow:    #e8b563;
+  --red:       #e67574;
+  --purple:    #b899d4;
+
+  --mint-dim:  color-mix(in oklab, var(--mint) 22%, transparent);
+
+  /* type */
+  --mono: "JetBrains Mono Variable", ui-monospace, "SF Mono", Menlo, monospace;
+  --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+
+  /* measure + rhythm */
+  --measure: 68ch;
+  --page: 760px;
+  --step: clamp(1.5rem, 1.1rem + 1.6vw, 2rem);
+}
+
+/* ---- reset-ish ---- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--serif);
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+}
+
+::selection { background: var(--mint-dim); color: #fff; }
+
+a {
+  color: var(--mint);
+  text-decoration: none;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  transition: color .15s ease, text-decoration-color .15s ease;
+}
+a:hover { text-decoration: underline; text-decoration-color: var(--mint); }
+
+:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+code, kbd, samp { font-family: var(--mono); font-size: 0.875em; }
+
+/* ---- layout shell ---- */
+.wrap {
+  width: 100%;
+  max-width: var(--page);
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 5vw, 2.5rem);
+}
+
+/* the editor gutter: a thin column of faint line numbers on the left */
+.gutter-rule {
+  position: fixed;
+  inset-block: 0;
+  left: max(1.1rem, calc((100vw - var(--page)) / 2 - 2.4rem));
+  width: 1px;
+  background: linear-gradient(var(--line), transparent 92%);
+  z-index: 0;
+  pointer-events: none;
+}
+@media (max-width: 900px) { .gutter-rule { display: none; } }
+
+/* ---- sections ---- */
+main { position: relative; z-index: 1; }
+section { padding-block: clamp(2.75rem, 7vw, 4.5rem); }
+section + section { border-top: 1px solid var(--line); }
+
+h1, h2, h3 { font-family: var(--mono); font-weight: 500; line-height: 1.2; }
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+  margin: 0 0 1.75rem;
+}
+.section-head h2 {
+  font-size: 0.95rem;
+  color: var(--fg);
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+.section-head .marker {
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  color: var(--mint);
+  font-weight: 500;
+}
+
+.prose { max-width: var(--measure); }
+.prose p { margin: 0 0 1.1rem; color: var(--fg-dim); }
+.prose p:last-child { margin-bottom: 0; }
+.prose strong { color: var(--fg); font-weight: 600; }
+.prose em { color: var(--fg); }
