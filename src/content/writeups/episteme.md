@@ -10,6 +10,10 @@ live: "https://episteme.cloud"
 fullSource:
   label: "the full technical writedown (gist)"
   url: "https://gist.github.com/amstrdm/06f9a7eecde222300178bf04e2aed240"
+aiNote: >-
+  I wrote the research, the notes and the original text myself; I used AI to
+  tighten the prose on this page so it reads more smoothly. The full writedown
+  linked above is entirely my own writing, with no AI involved.
 order: 1
 ---
 

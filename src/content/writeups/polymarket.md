@@ -9,6 +9,10 @@ repo: "https://github.com/amstrdm/polymarket-efficiency"
 fullSource:
   label: "the full writedown (WRITEUP.md)"
   url: "https://github.com/amstrdm/polymarket-efficiency/blob/main/WRITEUP.md"
+aiNote: >-
+  I did the research and wrote the original notes and text myself; I used AI to
+  tighten the prose on this page so it reads more smoothly. The analysis,
+  decisions and conclusions are mine.
 order: 2
 ---
 

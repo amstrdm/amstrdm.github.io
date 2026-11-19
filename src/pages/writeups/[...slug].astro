@@ -43,6 +43,13 @@ const d = entry.data;
       </aside>
     )}
 
+    {d.aiNote && (
+      <p class="ai-note">
+        <span class="ai-note-k">a note on this text</span>
+        {d.aiNote}
+      </p>
+    )}
+
     <article class="doc">
       <Content />
     </article>
@@ -123,6 +130,26 @@ const d = entry.data;
       text-transform: uppercase;
     }
     .fullsource a { font-family: var(--mono); font-size: 0.82rem; color: var(--pc); }
+
+    /* ─── authorship / AI note ─── */
+    .ai-note {
+      max-width: 70ch;
+      margin: -1rem 0 2.5rem;
+      font-size: 0.9rem;
+      line-height: 1.55;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .ai-note-k {
+      display: block;
+      margin-bottom: 0.3rem;
+      font-family: var(--mono);
+      font-style: normal;
+      font-size: 0.66rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--faint);
+    }
 
     /* ─── long-form document ─── */
     .doc { max-width: 70ch; }

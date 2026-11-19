@@ -16,6 +16,8 @@ const writeups = defineCollection({
     fullSource: z
       .object({ label: z.string(), url: z.string().url() })
       .optional(),
+    // optional note on authorship / how AI was used on the text
+    aiNote: z.string().optional(),
     order: z.number(),
   }),
 });
