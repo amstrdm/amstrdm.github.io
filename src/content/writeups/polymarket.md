@@ -1,6 +1,6 @@
 ---
 title: Is Polymarket efficient enough to trade?
-subtitle: A leakage-safe test of whether prediction-market prices predict returns — and whether any edge survives costs
+subtitle: A leakage-safe hunt for an edge — through efficiency, smart money, and following the crowd. Every version is real before costs and gone after the spread.
 accent: orange
 date: "2025"
 status: Research — complete
@@ -12,119 +12,185 @@ fullSource:
 order: 2
 ---
 
-The question is simple and the honest answer is a bit anticlimactic, which is
-exactly why it's worth writing down. If a prediction market is efficient, two
-things should hold: its prices should behave like real probabilities, and you
-shouldn't be able to predict its next move from its own trading history. I tested
-both — and built the whole thing so that a *positive* result couldn't just be an
-artifact of look-ahead or of pretending trading is free.
+People clearly make consistent money on Polymarket. So is the market actually
+inefficient in a way you can exploit, or are the winners just the survivors of a
+big coin-flipping contest? I wanted to answer that with data instead of vibes.
 
-The rule I kept coming back to: an edge only counts if it's still there after you
-pay to trade.
+The plan was two-sided. First, is Polymarket efficient at all — because if it is,
+trading it is just gambling and there's no point going further. Second, if there's
+something there, find the "smart money" and see whether you can follow it. The
+short version is that I tried four different ways to find an edge, every one has a
+real signal *before* costs, and every one dies once you pay the spread. The rule I
+kept coming back to: an edge only counts if it survives the toll of actually
+trading.
 
-The full writedown — the whole story, every number, the methodology in detail —
-lives in [WRITEUP.md](https://github.com/amstrdm/polymarket-efficiency/blob/main/WRITEUP.md)
-in the repo. This page is the short version.
+This is the walkthrough. The whole story, every number, and the methodology in
+detail live in [WRITEUP.md](https://github.com/amstrdm/polymarket-efficiency/blob/main/WRITEUP.md)
+in the repo.
 
-## The data
+## The data (this was most of the battle)
 
-On-chain trade history, loaded into a DuckDB / Parquet lake. The original pipeline
-pulled raw order-book fills from a Goldsky subgraph; that source has since died
-(the subgraph is deprecated and Polymarket's trades endpoint now 410s), so the
-published results come from a 208-market sample on Dune Analytics — one outcome
-token per market, hourly bars from mid-2024 to early 2025, about 149k bars.
-
-Two things I keep attached to those numbers. First, volume on Polymarket is
-brutally concentrated: across ~100k markets, the top ~5% carry roughly 80% of the
-volume and the long tail is basically untradeable, so the test only looks at a
-liquid "active universe."
+I need every fill on every market: who traded, how much, at what price, and how the
+market resolved. The original pipeline pulled raw fills from Polymarket's Goldsky
+subgraph — which is now dead (deprecated after their V2 migration), as is the Data
+API `/trades` endpoint (410 Gone). The data the project originally ran on simply
+isn't retrievable from Polymarket's free endpoints anymore, which is its own small
+finding. What saved it was Dune Analytics: decoded on-chain `OrderFilled` events
+plus a market-resolution table, aggregated to hourly bars server-side. The
+efficiency study runs on the top ~208 markets by volume over the 2024 election
+period, about 150k hourly bars.
 
 <figure>
-  <img src="/figures/polymarket-volume.png" alt="Cumulative share of trading volume across markets — a small fraction carries most of the volume" loading="lazy" />
-  <figcaption>Volume concentration across markets. The tradeable universe is a thin slice at the top; most markets never have enough liquidity to matter.</figcaption>
+  <img src="/figures/polymarket-volume.png" alt="Cumulative share of trading volume across markets — a small fraction carries most of it" loading="lazy" />
+  <figcaption>Volume is brutally concentrated — a thin slice of markets carries most of it, and the long tail is untradeable. That's why the test restricts to a liquid universe. Picking that universe by realized volume is itself a look-ahead, which is why the kept side resolves YES 88% of the time; I flag it rather than hide it.</figcaption>
 </figure>
 
-Second, those 208 markets were picked *after the fact* by realized volume, which
-is itself a look-ahead — in the universe selection, not the model — and it biases
-the sample toward decisive, heavily-traded markets (the kept side resolved YES 88%
-of the time). I'd rather say that plainly than let the headline number stand on
-its own.
+## Part 1 — is it efficient?
 
-## Test 1 — are the prices good probabilities?
-
-One snapshot per market, 24 hours before it resolves, so each market is a single
-independent forecast. The per-market Brier score comes out at **0.056**. On its
-own that means nothing, so the question is: better than what?
+**Are the prices good probabilities?** One snapshot per market, 24 hours before it
+resolves, so each market is one independent forecast. The Brier score is 0.056. On
+its own that's meaningless, so: a coin flip scores 0.25 (beating that is easy and
+pointless), but the honest baseline is the base rate — just always predicting the
+average outcome — which scores 0.104. Against that, 0.056 is a skill score of
+**0.46**: the prices cut the base-rate error roughly in half. They're genuinely
+informative, which also means beating them will be hard.
 
 <figure>
   <img src="/figures/polymarket-calibration.png" alt="Calibration curve — observed outcome frequency vs market price, close to the diagonal" loading="lazy" />
-  <figcaption>Reliability curve: market price on the x-axis, realized outcome frequency on the y. Close to the diagonal is good. Prices run a touch above the line (slightly under-confident) but track reality well.</figcaption>
+  <figcaption>Things priced at 70% happen about 70% of the time. Close to the diagonal is good; the prices track reality well.</figcaption>
 </figure>
 
-A coin-flip baseline scores 0.25, and beating that would be easy and meaningless —
-of course most favorites win. The fair comparison is the base rate (just always
-predicting the 88% YES rate), which scores 0.104. Against *that*, 0.056 is a skill
-score of **0.46**: the prices cut the base-rate error roughly in half. They're
-genuinely informative, not just "the favorite usually wins."
+**Can I predict the next move?** A ridge regression on past-only microstructure
+features (cumulative volume, trade count, volatility, spread, age, time to
+resolution) predicting the next 24-hour move. Out-of-sample correlation is ~0.107,
+but I predict a 24h-ahead target every hour, so the observations overlap and the
+naive sample size lies. Clustering the standard errors by market gives **t ≈ 4.7** —
+the signal is real. But real and tradeable are different things. A long/short
+backtest that pays the spread on entry and exit, swept across cost assumptions:
 
-## Test 2 — is the signal real, and is it tradeable?
-
-A ridge regression on past-only microstructure features — cumulative volume, trade
-count, 24-hour volatility, spread, market age, time to resolution — predicting the
-next 24-hour move in log-odds.
-
-**Is it real?** Out-of-sample correlation is about 0.107. But I'm predicting a
-24-hour-ahead target every hour, so neighbouring observations overlap massively
-and the naive sample size (~39k) is a lie. Clustering the standard errors by
-market gives **t ≈ 4.7** across 113 markets — the signal is distinguishable from
-zero.
-
-**Is it tradeable?** A long/short top-decile backtest, paying the estimated spread
-on entry *and* exit, swept from paying nothing to paying 2× the spread:
-
-| cost × spread | mean PnL / period | Sharpe / period | 95% CI |
-|---|---|---|---|
-| 0× (pre-cost) | **+0.028** | **+0.24** | [+0.012, +0.044] |
-| 0.5× | −0.001 | −0.01 | [−0.018, +0.015] |
-| 1× (realistic) | −0.031 | −0.25 | [−0.049, −0.014] |
-| 2× | −0.088 | −0.66 | [−0.108, −0.071] |
+| cost × spread | Sharpe (per rebalance) |
+|---|---|
+| 0× (pre-cost) | **+0.24** |
+| 0.5× | ≈ 0 |
+| 1× (realistic) | −0.25 |
+| 2× | −0.66 |
 
 <figure>
   <img src="/figures/polymarket-equity-curve.png" alt="Cumulative long/short PnL at 0.5x, 1x and 2x the estimated spread" loading="lazy" />
-  <figcaption>Cumulative long/short PnL at different cost assumptions. Pre-cost it climbs; at a realistic full spread it bleeds. The edge is real and smaller than the bid/ask spread.</figcaption>
+  <figcaption>Pre-cost the edge climbs; at a realistic full spread it bleeds. It breaks even around half the spread. The signal is real and smaller than the bid/ask.</figcaption>
 </figure>
 
-Before costs the edge is small but real. It breaks even around *half* the
-estimated spread and loses money at the full spread. So the edge exists on paper
-and it's smaller than what it costs to cross — efficient in the way that actually
-matters if you're the one paying the spread.
+**Isn't that just bid-ask bounce?** A pre-cost Sharpe of +0.24/hour is suspicious —
+last-trade prices ping-pong between bid and ask, which looks predictable but isn't
+capturable. So I re-ran it entering one bar late, and again pricing off the
+midpoint instead of the last trade. Both wash out bounce by construction, and the
+edge survived both (Sharpe 0.24 and 0.26). So it's a genuine directional signal,
+untradeable only because it's smaller than the spread — not a microstructure
+artifact. I'm glad I ran that check; "I suspected it and ruled it out" beats
+asserting a conclusion.
 
-### Ruling out the boring explanation
+So to a **price-taker**, Polymarket is efficient. Clean negative result — and with
+this little machinery, a negative result is more believable than an edge would be.
+But "efficient to a naive price-taker" isn't "nobody makes money." People do. So
+who are they?
 
-A pre-cost Sharpe of +0.24 per hour is high enough to be suspicious, and the usual
-culprit is bid-ask bounce: last-trade prices bounce between bid and ask, which
-*looks* predictable but isn't, because you'd pay the exact spread the bounce comes
-from. Two standard checks, both at zero cost — entering a bar late instead of on
-the signal bar, and pricing off the midpoint instead of the last trade — and the
-edge survives both (Sharpe 0.24 and 0.26). So it's a genuine directional signal,
-not a microstructure artifact. It stays untradeable only because it's smaller than
-the spread.
+## Part 2 — smart money: skill or luck?
 
-## Why it's built the way it is
+With thousands of traders and binary outcomes, plenty look like geniuses by luck.
+The only honest test is out of sample: rank wallets by profit in an earlier period
+(A), see if it predicts a later period (B). I took the 41,500 wallets active in
+both.
 
-Most of the effort went into not fooling myself:
+As a group they're net profitable (+$17M in A, +$14M in B) — they take money off
+the casuals. But individually, persistence is almost nothing: the rank correlation
+between a wallet's period-A and period-B return is ~0.02. If you were profitable in
+A, you're profitable in B 48% of the time — versus a 44% base rate. So you can't
+just copy whoever was green last month; most of them were lucky.
 
-- Features are **past-only** — cumulative-so-far and trailing windows, nothing
-  that peeks forward.
-- The train/test split is **by time**, with a horizon-sized gap at the cutoff so
-  the test set can't see into training.
-- Trades that would be **held across resolution are dropped.**
-- The spread is a soft proxy (the high−low of each hourly bar), so instead of
-  betting on one cost number I **swept the cost**. If an apparent edge only lives
-  at half the spread and dies at the real one, it was never an edge.
+<figure>
+  <img src="/figures/polymarket-persistence.png" alt="Median period-B ROI by period-A performance decile — noise around zero" loading="lazy" />
+  <figcaption>Out-of-sample return by how profitable you were before. If past profit predicted future profit this would slope up; instead it's noise around zero. Even the top decile is slightly negative.</figcaption>
+</figure>
 
-## Where it lands
+The *extreme* tail is different, though. The top 100 wallets by period-A profit are
+66% profitable in B (vs 44% base); strictly-defined persistent winners are about 5%
+of the cohort and put up a +3.7% median return. So a skilled elite genuinely
+exists — it's just the tail, not "anyone who won recently."
 
-A real 24-hour signal that's unprofitable after realistic costs, over prices that
-are already well-calibrated. That's a duller headline than "I found an edge," and
-a much more trustworthy one.
+What do they do? My guess was market-makers earning the spread that kills the
+price-taker. I checked directly: `OrderFilled` tells you who was the maker (resting
+liquidity) and who was the taker (crossing the spread). The winners' maker-rate is
+**0.17** — they're the *taker* 83% of the time. The opposite of market-makers. So
+their edge is **directional and informational**: they pay the spread to express a
+view and are right often enough to overcome it. That reconciles with Part 1 instead
+of breaking it — the market's efficient against a dumb signal, and a skilled
+minority beats it on actual information.
+
+## Part 3 — follow the group, then?
+
+Individuals don't persist, but the group reliably makes money — so why not mirror
+the smart group's consensus instead of picking a member? I defined the smart group
+on period-A data only, then in period B looked at their net position 48 hours
+before each market resolved, and asked: does it predict the outcome *beyond the
+price*, and can you trade it after costs?
+
+Clean no. Following their net flow made +0.38% per trade before costs (basically
+zero, and negative once you pay even a one-cent half-spread). And in a logistic
+regression of the outcome on price and smart-flow direction, the price is hugely
+significant and the smart-flow term is **not** (p = 0.36). Once you know the price,
+which way the smart money leaned tells you nothing extra — the price already ate
+their information. They're aggressive takers who move the price *as* they trade, so
+by the time their position is visible on-chain, you're a latecomer paying the
+spread.
+
+## Part 4 — the one place it almost worked
+
+There's a hole in that argument: it assumes the informed traders *move* the price.
+What about someone consistently right who trades *small*? Their order doesn't move
+anything, so their information wouldn't be impounded yet — and it could leak in
+slowly. (Whales also split into many wallets to hide, so some "small" accounts are
+whales trading quietly.) I split the smart traders into **big winners** (the
+price-movers) and a **small-but-skilled** cohort (tiny size, high return-on-capital),
+and checked whether each predicts the outcome beyond the price, 7 days out and 1
+day out.
+
+Big-winner flow added nothing at either point. But small-skilled flow *did* add
+signal — but only 7 days out (p ≈ 0.02), gone by 1 day out. The price slowly
+absorbs it over the final week. Following that 7-day lean to resolution made +4.2%
+per trade gross, and **+3.2% after a one-cent half-spread** — an edge that clears a
+realistic cost. The only thing in the whole project that looked tradeable.
+
+Which is exactly when you should distrust yourself: one period pair, one of four
+combinations landing significant, a one-sided edge. So I built a proper
+**walk-forward backtest** — six windows from Nov 2024 to Oct 2025, each defining the
+cohort on the prior four months and trading the next two after costs.
+
+<figure>
+  <img src="/figures/polymarket-walkforward.png" alt="Walk-forward equity curve — small-skilled flat near zero, big-winners control bleeding to -300" loading="lazy" />
+  <figcaption>Following small-skilled flow (green) vs the big-winner control (gray), after a one-cent spread. Nearly all the small-cohort profit comes from the first window — the one I found the effect on — then it goes flat. Across all six it's break-even. But the control bleeds to −300: small, non-price-moving flow really does carry more information than whale flow.</figcaption>
+</figure>
+
+So the exciting number was mostly the discovery window flattering me — which is the
+whole reason you walk a result forward. But one piece is robust and I think it's the
+real takeaway: the small cohort beats the whale control enormously. The mechanism is
+real — quiet, non-price-moving flow carries information that whale flow doesn't,
+because the whales' is already in the price. It just isn't enough to clear the
+spread. Same lesson as everywhere else: the gross signal is real, the spread eats
+it.
+
+## The bottom line
+
+Polymarket is efficient in the way that matters to a normal trader. You can't beat
+it with a simple signal, you can't copy last month's winners, and you can't follow
+the whales — by the time their move is visible, the price has already absorbed it.
+It's not efficient in the strong sense: a small, aggressive, informed minority
+genuinely extracts money from the crowd, and they're a huge share of volume. Their
+edge is information, not a trick and not liquidity provision (I checked).
+
+Every "follow something" idea fails for the same satisfying reason: for information
+that has already moved the price, the price is a sufficient statistic, and the
+spread is the toll for arriving after. The one crack — quiet informed flow a week
+early — has a real gross edge but washes out to break-even after costs. The people
+who make money are the ones putting information *into* the price. There doesn't seem
+to be a free lunch for the rest of us reading it back out — which is, honestly, the
+answer I should have expected.

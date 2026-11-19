@@ -25,6 +25,6 @@ shot default "kicker=$(enc 'backend & full-stack developer')&title=$(enc 'Antoni
 
 shot episteme "kicker=$(enc 'writeup · full-stack · python')&title=$(enc 'Episteme')&sub=$(enc 'Turning crowd-sourced stock theses into structured, peer-reviewed research.')&accent=blue&file=$(enc '~/caserta/writeups/episteme.md')"
 
-shot polymarket "kicker=$(enc 'writeup · quant research')&title=$(enc 'Is Polymarket efficient enough to trade?')&sub=$(enc 'A leakage-safe test of whether the edge survives costs. Short answer: no.')&accent=orange&file=$(enc '~/caserta/writeups/polymarket.md')"
+shot polymarket "kicker=$(enc 'writeup · quant research')&title=$(enc 'Is Polymarket efficient enough to trade?')&sub=$(enc 'Efficiency, smart money, follow-the-crowd — a leakage-safe hunt for an edge. Short answer: not after costs.')&accent=orange&file=$(enc '~/caserta/writeups/polymarket.md')"
 
 echo "Done."
