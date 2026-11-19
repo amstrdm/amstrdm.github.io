@@ -1,0 +1,516 @@
+---
+import Base from '../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const writeups = (await getCollection('writeups')).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+
+// Hero is set like the top of an open buffer; each line gets a gutter number.
+const heroLines = [
+  { text: 'Antonio Caserta', kind: 'name' },
+  { text: 'backend & full-stack developer', kind: 'role' },
+  { text: '', kind: 'blank' },
+  { text: 'I build web apps and the backends behind them,', kind: 'body' },
+  { text: 'mostly Python, FastAPI and React. I work part-time', kind: 'body' },
+  { text: 'at Seibert Group, and lately I’ve gone deep into C++', kind: 'body' },
+  { text: 'and embedded firmware for my startup, Arrow.', kind: 'body' },
+];
+
+const featured = [
+  {
+    accent: 'blue',
+    kicker: 'full-stack · python · live in production',
+    name: 'Episteme',
+    blurb:
+      'Reads stock discussions off Reddit and Seeking Alpha and turns them into something you can actually use: the bull and bear case for a ticker, each argument scored and checked against what the comments say back. It started as my final Abitur research project (graded 15/15, the top mark) and now it’s live, running on a VPS. FastAPI backend, React frontend, and a Postgres database doing the semantic dedup.',
+    tags: ['Python', 'FastAPI', 'PostgreSQL', 'React'],
+    links: [
+      { label: 'writeup', href: '/writeups/episteme' },
+      { label: 'episteme.cloud', href: 'https://episteme.cloud' },
+    ],
+  },
+  {
+    accent: 'mint',
+    kicker: 'firmware · my startup · 2026–present',
+    name: 'Arrow',
+    blurb:
+      'An embedded device that points you toward friends nearby over ultra-wideband and Bluetooth. I write the firmware — around 4,500 lines of C++20 on bare metal, built so the whole thing is mockable and I can test it off-device. The part I’m most proud of is the security: encrypted pairing, mutually-authenticated ranging, and defenses against people spoofing distance or relaying signals. The main repo is private while it’s early, but I open-sourced the UWB SDK port it runs on.',
+    tags: ['C++20', 'Zephyr', 'nRF52', 'DW3000'],
+    links: [
+      { label: 'UWB SDK port (open source)', href: 'https://github.com/amstrdm/dw3xxx-sdk-zephyr' },
+    ],
+  },
+  {
+    accent: 'orange',
+    kicker: 'research · python · 2025',
+    name: 'Polymarket efficiency study',
+    blurb:
+      'I wanted to know whether Polymarket is inefficient enough to actually trade. Short answer: no. The prices are well-calibrated, there’s a real 24-hour signal in the data that survives the usual sanity checks, and it still loses money once you pay a realistic spread. Most of the work went into not fooling myself.',
+    tags: ['Python', 'DuckDB', 'Dune / SQL', 'scikit-learn'],
+    links: [
+      { label: 'writeup', href: '/writeups/polymarket' },
+      { label: 'writedown', href: 'https://github.com/amstrdm/polymarket-efficiency/blob/main/WRITEUP.md' },
+    ],
+  },
+];
+
+const repos = [
+  { name: 'Bolt4Free', desc: 'A payment-flow flaw I found in Bolt’s e-scooter app, reported, then wrote up', lang: 'Python', stars: 85 },
+  { name: 'mlm-trend-following', desc: 'A trend-following futures strategy that trades itself over the IBKR API', lang: 'Python', stars: 48 },
+  { name: 'trading212-api-extended', desc: 'A REST client for Trading212', lang: 'Python', stars: 25 },
+  { name: 'episteme-terminal', desc: 'The crowd-sentiment engine behind Episteme', lang: 'Python', stars: 8 },
+  { name: 'dw3xxx-sdk-zephyr', desc: 'My port of Qorvo’s DW3xxx UWB SDK to Zephyr 4.2', lang: 'C', stars: 6 },
+  { name: 'dutchpro', desc: 'The Neovim colorscheme this site is painted in', lang: 'Lua', stars: 0 },
+];
+
+const title = 'Antonio Caserta — backend & full-stack developer';
+const description =
+  'Antonio Caserta — backend and full-stack developer, part-time at Seibert Group. Python, FastAPI, React; lately C++ and embedded firmware for my startup Arrow. Building Episteme, among other things.';
+---
+
+<Base title={title} description={description} ogImage="/og/default.png">
+  <main class="wrap">
+    <!-- ───────────────────────── hero ───────────────────────── -->
+    <header class="hero" id="top">
+      <div class="buffer">
+        {heroLines.map((line, i) => (
+          <div class={`bufline ${line.kind}`}>
+            <span class="ln" aria-hidden="true">{String(i + 1).padStart(2, ' ')}</span>
+            {line.kind === 'name' ? (
+              <h1>{line.text}<span class="caret" aria-hidden="true"></span></h1>
+            ) : line.kind === 'blank' ? (
+              <span></span>
+            ) : (
+              <span class="txt">{line.text}</span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <p class="meta">
+        Aachen, Germany · B.Sc. Computer Science, RWTH Aachen · German &amp; Italian citizen
+      </p>
+
+      <nav class="topnav" aria-label="Primary">
+        <a href="#work">work</a>
+        <a href="#writeups">writeups</a>
+        <a href="/antonio-caserta-cv.pdf">résumé</a>
+        <a href="https://github.com/amstrdm">github</a>
+        <a href="mailto:a.caserta@proton.me">email</a>
+      </nav>
+    </header>
+
+    <!-- ───────────────────────── about ──────────────────────── -->
+    <section id="about">
+      <div class="section-head">
+        <span class="marker">#</span>
+        <h2>about</h2>
+      </div>
+      <div class="prose">
+        <p>
+          Most of what I’ve built is backend and full-stack. Episteme is the one
+          I’d point at first: it reads stock discussions off Reddit and Seeking
+          Alpha, pulls out the actual arguments, and scores them against what the
+          comments say back. It’s live and people use it. Before that I built
+          research tooling for a quant-finance lab at EBS and a revenue-forecasting
+          dashboard for a consultancy.
+        </p>
+        <p>
+          Earlier this year I started a company, Arrow, which dragged me down into
+          C++ and embedded firmware. That’s newer ground for me and I’ve gotten
+          genuinely into it, but backend is still where I’m quickest and have the
+          most behind me.
+        </p>
+        <p>
+          On the side I’ve done some security research — a payment bug in Bolt’s
+          scooter app, a couple of RCE and XSS disclosures. I’m into poker, game
+          theory and prediction markets. And I basically live in Neovim; this site
+          runs on <a href="https://github.com/amstrdm/dutchpro">dutchpro</a>, a
+          colorscheme I wrote.
+        </p>
+      </div>
+
+      <ul class="facts" aria-label="Highlights">
+        <li><span class="k">RWTH Aachen</span><span class="v">B.Sc. Computer Science, since 2026</span></li>
+        <li><span class="k">Seibert Group</span><span class="v">Software developer (part-time), 2025–present</span></li>
+        <li><span class="k">EBS University</span><span class="v">Research software developer, quant finance &amp; AI</span></li>
+        <li><span class="k">GI award</span><span class="v">Outstanding achievement in computer science</span></li>
+      </ul>
+
+      <blockquote class="reference">
+        <p>
+          “He approaches problems with a rare combination of precision, creativity
+          and persistence — work that typically exceeds the expectations placed on
+          students at his stage.”
+        </p>
+        <cite>Dr. Deepak Ravikumar, who I worked with at EBS University</cite>
+      </blockquote>
+    </section>
+
+    <!-- ───────────────────────── work ───────────────────────── -->
+    <section id="work">
+      <div class="section-head">
+        <span class="marker">#</span>
+        <h2>selected work</h2>
+      </div>
+
+      <div class="projects">
+        {featured.map((p) => (
+          <article class={`project accent-${p.accent}`}>
+            <header class="project-top">
+              <h3>{p.name}</h3>
+              <span class="kicker">{p.kicker}</span>
+            </header>
+            <p class="project-blurb">{p.blurb}</p>
+            <div class="project-foot">
+              <ul class="tags">
+                {p.tags.map((t) => <li>{t}</li>)}
+              </ul>
+              <ul class="plinks">
+                {p.links.map((l) => (
+                  <li><a href={l.href}>{l.label}</a></li>
+                ))}
+              </ul>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <!-- ──────────────────────── writeups ────────────────────── -->
+    <section id="writeups">
+      <div class="section-head">
+        <span class="marker">#</span>
+        <h2>writeups</h2>
+      </div>
+      <p class="prose intro">
+        Longer notes on a couple of these, if you want the details. The Episteme
+        one is a full technical breakdown; the Polymarket one walks through the
+        result and links straight to the numbers.
+      </p>
+      <ul class="writeup-list">
+        {writeups.map((w) => (
+          <li class={`accent-${w.data.accent}`}>
+            <a href={`/writeups/${w.id}`}>
+              <span class="w-title">{w.data.title}</span>
+              <span class="w-sub">{w.data.subtitle}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <!-- ─────────────────── open source ──────────────────────── -->
+    <section id="elsewhere">
+      <div class="section-head">
+        <span class="marker">#</span>
+        <h2>open source</h2>
+        <a class="all-link" href="https://github.com/amstrdm">all repositories ↗</a>
+      </div>
+      <ul class="repos">
+        {repos.map((r) => (
+          <li>
+            <a class="repo-name" href={`https://github.com/amstrdm/${r.name}`}>{r.name}</a>
+            <span class="repo-desc">{r.desc}</span>
+            <span class="repo-meta">
+              <span class="repo-lang">{r.lang}</span>
+              {r.stars > 0 && <span class="repo-stars">★ {r.stars}</span>}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <!-- ─────────────────────── contact ──────────────────────── -->
+    <section id="contact">
+      <div class="section-head">
+        <span class="marker">#</span>
+        <h2>get in touch</h2>
+      </div>
+      <p class="prose">
+        Happy to talk — backend work, firmware, security, markets, or something
+        that doesn’t have a name yet. Email is the easiest way to reach me.
+      </p>
+      <ul class="contact-links">
+        <li><span class="ck">email</span><a href="mailto:a.caserta@proton.me">a.caserta@proton.me</a></li>
+        <li><span class="ck">github</span><a href="https://github.com/amstrdm">github.com/amstrdm</a></li>
+        <li><span class="ck">résumé</span><a href="/antonio-caserta-cv.pdf">antonio-caserta-cv.pdf ↗</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <!-- neovim-style statusline footer -->
+  <footer class="statusline">
+    <div class="wrap statusline-inner">
+      <span class="st-mode">NORMAL</span>
+      <span class="st-file">~/caserta/portfolio.md</span>
+      <span class="st-spacer"></span>
+      <span class="st-git"> main</span>
+      <span class="st-pos">utf-8 · {new Date().getFullYear()}</span>
+    </div>
+  </footer>
+
+  <style>
+    /* ─── hero ─── */
+    .hero { padding-block: clamp(3.5rem, 11vh, 7rem) 0; }
+    .buffer { margin-bottom: 1.75rem; }
+    .bufline {
+      display: grid;
+      grid-template-columns: 2.4ch 1fr;
+      gap: 1.25rem;
+      align-items: baseline;
+    }
+    .bufline .ln {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--gutter);
+      text-align: right;
+      user-select: none;
+      font-variant-numeric: tabular-nums;
+    }
+    .bufline.blank { height: 0.6rem; }
+    .bufline h1 {
+      font-size: clamp(2.1rem, 6vw, 3.4rem);
+      margin: 0;
+      letter-spacing: -0.015em;
+      font-weight: 700;
+      color: var(--fg);
+      line-height: 1.05;
+    }
+    .bufline.role .txt {
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      color: var(--mint);
+      font-weight: 500;
+    }
+    .bufline.body .txt {
+      font-family: var(--serif);
+      font-size: clamp(1.15rem, 2.4vw, 1.4rem);
+      color: var(--fg-dim);
+      line-height: 1.45;
+    }
+    .caret {
+      display: inline-block;
+      width: 0.6ch;
+      height: 1.05em;
+      margin-left: 0.15em;
+      translate: 0 0.12em;
+      background: var(--mint);
+      animation: blink 1.15s steps(1) infinite;
+    }
+    @keyframes blink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { .caret { animation: none; opacity: 1; } }
+
+    .meta {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin: 0 0 2rem;
+      padding-left: calc(2.4ch + 1.25rem);
+    }
+    .topnav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.6rem;
+      padding-left: calc(2.4ch + 1.25rem);
+      padding-bottom: clamp(2.5rem, 7vw, 4rem);
+    }
+    .topnav a {
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      color: var(--fg-dim);
+      position: relative;
+    }
+    .topnav a::before { content: ':'; color: var(--faint); }
+    .topnav a:hover { color: var(--mint); text-decoration: none; }
+
+    /* ─── about facts + reference ─── */
+    .prose.intro { margin-bottom: 1.6rem; }
+    .facts {
+      list-style: none;
+      margin: 2rem 0 0;
+      padding: 0;
+      display: grid;
+      gap: 0;
+      max-width: var(--measure);
+    }
+    .facts li {
+      display: grid;
+      grid-template-columns: minmax(8.5rem, auto) 1fr;
+      gap: 1.25rem;
+      padding: 0.7rem 0;
+      border-top: 1px solid var(--line);
+      font-family: var(--mono);
+      font-size: 0.82rem;
+    }
+    .facts .k { color: var(--teal); }
+    .facts .v { color: var(--muted); }
+
+    .reference {
+      max-width: var(--measure);
+      margin: 2.5rem 0 0;
+      padding: 0 0 0 1.4rem;
+      border-left: 2px solid var(--purple);
+    }
+    .reference p {
+      margin: 0 0 0.7rem;
+      font-size: 1.1rem;
+      line-height: 1.5;
+      color: var(--fg-dim);
+      font-style: italic;
+    }
+    .reference cite {
+      font-family: var(--mono);
+      font-style: normal;
+      font-size: 0.74rem;
+      color: var(--muted);
+    }
+
+    /* ─── projects ─── */
+    .projects { display: grid; gap: 0; }
+    .project {
+      padding: 1.8rem 0 1.8rem 1.6rem;
+      border-left: 2px solid var(--line);
+      margin-left: 2px;
+      position: relative;
+    }
+    .project + .project { border-top: 1px solid var(--line); }
+    .project::before {
+      content: '';
+      position: absolute;
+      left: -2px; top: 1.9rem;
+      width: 2px; height: 1.4rem;
+      background: var(--pc, var(--mint));
+    }
+    .accent-mint   { --pc: var(--mint); }
+    .accent-blue   { --pc: var(--blue); }
+    .accent-orange { --pc: var(--orange); }
+    .accent-teal   { --pc: var(--teal); }
+    .accent-red    { --pc: var(--red); }
+    .accent-purple { --pc: var(--purple); }
+
+    .project-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.4rem 1rem;
+      margin-bottom: 0.7rem;
+    }
+    .project-top h3 {
+      font-size: 1.15rem;
+      margin: 0;
+      color: var(--fg);
+      font-weight: 500;
+    }
+    .project .kicker {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--pc, var(--mint));
+    }
+    .project-blurb { max-width: var(--measure); margin: 0 0 1.1rem; color: var(--fg-dim); }
+    .project-foot {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 0.8rem 1.5rem;
+      align-items: baseline;
+    }
+    .tags, .plinks { list-style: none; display: flex; flex-wrap: wrap; gap: 0.5rem 0.9rem; margin: 0; padding: 0; }
+    .tags li {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .tags li::before { content: '· '; color: var(--gutter); }
+    .tags li:first-child::before { content: ''; }
+    .plinks li { font-family: var(--mono); font-size: 0.76rem; }
+    .plinks a { color: var(--pc, var(--mint)); }
+
+    /* ─── writeups ─── */
+    .writeup-list { list-style: none; margin: 0; padding: 0; }
+    .writeup-list li { border-top: 1px solid var(--line); }
+    .writeup-list li:last-child { border-bottom: 1px solid var(--line); }
+    .writeup-list a {
+      display: block;
+      padding: 1.3rem 0 1.3rem 1.4rem;
+      border-left: 2px solid transparent;
+      color: var(--fg);
+      transition: border-color .15s ease, background .15s ease;
+    }
+    .writeup-list a:hover { text-decoration: none; border-left-color: var(--pc); background: var(--surface); }
+    .w-title { display: block; font-family: var(--mono); font-size: 1rem; color: var(--fg); margin-bottom: 0.3rem; }
+    .writeup-list a:hover .w-title { color: var(--pc); }
+    .w-sub { display: block; max-width: var(--measure); color: var(--muted); font-size: 0.97rem; }
+
+    /* ─── repos ─── */
+    .all-link { font-family: var(--mono); font-size: 0.74rem; color: var(--muted); margin-left: auto; }
+    .section-head { flex-wrap: wrap; }
+    .repos { list-style: none; margin: 0; padding: 0; }
+    .repos li {
+      display: grid;
+      grid-template-columns: minmax(10rem, auto) 1fr auto;
+      gap: 0.4rem 1.25rem;
+      align-items: baseline;
+      padding: 0.85rem 0;
+      border-top: 1px solid var(--line);
+    }
+    .repos li:last-child { border-bottom: 1px solid var(--line); }
+    .repo-name { font-family: var(--mono); font-size: 0.86rem; }
+    .repo-desc { color: var(--muted); font-size: 0.95rem; }
+    .repo-meta { font-family: var(--mono); font-size: 0.72rem; color: var(--faint); white-space: nowrap; justify-self: end; }
+    .repo-stars { color: var(--yellow); margin-left: 0.6rem; }
+
+    /* ─── contact ─── */
+    .contact-links { list-style: none; margin: 1.6rem 0 0; padding: 0; }
+    .contact-links li {
+      display: grid;
+      grid-template-columns: 6rem 1fr;
+      gap: 1rem;
+      padding: 0.55rem 0;
+      border-top: 1px solid var(--line);
+      font-family: var(--mono);
+      font-size: 0.9rem;
+    }
+    .contact-links .ck { color: var(--faint); }
+
+    /* ─── statusline footer ─── */
+    .statusline {
+      border-top: 1px solid var(--line);
+      background: var(--bg-deep);
+      margin-top: 2rem;
+    }
+    .statusline-inner {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      height: 2.4rem;
+      color: var(--muted);
+    }
+    .st-mode {
+      background: var(--mint);
+      color: var(--bg-deep);
+      font-weight: 700;
+      padding: 0.2rem 0.7rem;
+      margin-right: 0.9rem;
+      letter-spacing: 0.05em;
+    }
+    .st-file { color: var(--fg-dim); }
+    .st-spacer { flex: 1; }
+    .st-git { color: var(--teal); margin-right: 1.1rem; }
+    .st-pos { color: var(--faint); }
+
+    @media (max-width: 620px) {
+      .repos li { grid-template-columns: 1fr; gap: 0.15rem; }
+      .repo-meta { justify-self: start; }
+      .facts li { grid-template-columns: 1fr; gap: 0.1rem; }
+      .project-foot { flex-direction: column; }
+      .st-file { display: none; }
+      .meta, .topnav { padding-left: 0; }
+      .meta { font-size: 0.72rem; }
+      .bufline { grid-template-columns: 1.8ch 1fr; gap: 0.8rem; }
+    }
+  </style>
+</Base>

@@ -1,0 +1,18 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="404 — not found" description="This page doesn’t exist.">
+  <main class="wrap nf">
+    <p class="code">E486: pattern not found</p>
+    <h1>404</h1>
+    <p class="msg">There’s no buffer at that path.</p>
+    <a href="/">← back to home</a>
+  </main>
+  <style>
+    .nf { min-height: 72vh; display: flex; flex-direction: column; justify-content: center; }
+    .code { font-family: var(--mono); color: var(--red); font-size: 0.82rem; margin: 0 0 1rem; }
+    .nf h1 { font-family: var(--mono); font-size: clamp(3rem, 14vw, 6rem); margin: 0; color: var(--fg); font-weight: 700; }
+    .msg { color: var(--muted); max-width: 40ch; margin: 0.6rem 0 1.8rem; }
+    .nf a { font-family: var(--mono); font-size: 0.85rem; }
+  </style>
+</Base>
