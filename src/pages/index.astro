@@ -25,7 +25,7 @@ const featured = [
     href: '/writeups/polymarket',
     cta: 'Read the writeup',
     blurb:
-      'A long investigation into whether you can actually make money on Polymarket. I tried predicting price moves from its own order flow, following the traders who consistently win, and eventually pricing things with outside data the market doesn’t have. Most of it is efficient and dies at the spread, but the two spots where you have to compute something retail can’t — short-dated crypto options and tournament outrights — turned up real mispricings. Neither is proven profitable yet, so I’ve got a paper-trader running on both.',
+      'A long investigation into whether you can actually make money on Polymarket. I tried predicting its moves from its own order flow, following the traders who consistently win, and bringing in outside data to price things it supposedly gets wrong (crypto options, sports, tennis brackets, weather). Almost all of it turned out efficient, and the one thing that looked like an edge only showed up in a single calm month. I don’t read that as “the market is unbeatable” though, since a skilled minority clearly does beat it. The edge just isn’t lying around in the obvious places I looked.',
     tags: ['Python', 'DuckDB', 'Dune / SQL', 'scikit-learn'],
     links: [
       { label: 'full analysis ↗', href: 'https://github.com/amstrdm/polymarket-efficiency/blob/main/WRITEUP.md' },

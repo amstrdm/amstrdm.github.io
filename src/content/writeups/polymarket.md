@@ -3,7 +3,7 @@ title: Is Polymarket efficient enough to trade?
 subtitle: Can you actually beat Polymarket? I went looking for an edge in its order flow, in the traders who consistently win, and in outside data the market doesn't price.
 accent: orange
 date: "2025"
-status: Research — ongoing (forward paper-trade running)
+status: Research — ongoing
 stack: ["Python", "DuckDB", "Dune / SQL", "scikit-learn"]
 repo: "https://github.com/amstrdm/polymarket-efficiency"
 fullSource:
@@ -21,26 +21,26 @@ money on Polymarket, so is the market actually inefficient in a way you can
 exploit, or are the winners just the ones who happened to survive a big
 coin-flipping contest? I wanted to answer that with data instead of a gut feeling.
 
-The plan was to work from the inside out. First figure out whether Polymarket is
-efficient at all, because if it is then trading it is just gambling and there's no
+My plan was to work from the inside out. First figure out whether Polymarket is
+efficient at all speaking from a general perspective, because if it is then trading it is just gambling and there's no
 point going further. Then, if there's something there, try to find the traders who
 consistently win and see whether you can actually follow them. And if reading the
 market's own data doesn't work, bring in data from outside that the market
 doesn't have. I'll say up front how it ends: almost everything I tried is
-efficient and gets eaten by the spread, and the only two places I found a real
-edge are spots where you have to compute something the crowd can't do in its head.
-Neither of those is proven profitable yet, so I've got a paper-trader running on
-them. This is the shorter version; the full thing with every number is in
+efficient (as expected) and gets eaten by the spread, and the one angle that even
+looked like an edge didn't really hold up once I pushed on it. I don't take that to
+mean the market is unbeatable, some people clearly do beat it, I just couldn't find
+the thing they have with the data and tools I had. This is the shorter version; the
+full thing with every number is in
 [WRITEUP.md](https://github.com/amstrdm/polymarket-efficiency/blob/main/WRITEUP.md).
 
 ## Getting the data
 
 A project like this lives or dies on the trade data, and that part was most of the
-battle. I originally pulled every fill from Polymarket's Goldsky subgraph, but when
-I went to regenerate everything it was dead, deprecated after their V2 migration,
+battle. I originally pulled every fill from Polymarket's Goldsky subgraph. But I unfortunately encountered a data corruption issue on my end and when
+I went to regenerate everything a couple months later it was dead, deprecated after their V2 migration,
 and their own `/trades` endpoint was gone too. So the data the project first ran on
-isn't retrievable from Polymarket's free endpoints anymore, which is already a
-small finding on its own. What saved it was Dune Analytics, which keeps decoded
+isn't retrievable from Polymarket's free endpoints anymore. What saved it was Dune Analytics, which keeps decoded
 on-chain tables of exactly what I needed. I aggregate the fills into hourly bars on
 Dune's side and only pull back the small result. For the efficiency study that's
 the top 208 markets by volume over the 2024 election period, about 150k hourly bars.
@@ -68,7 +68,7 @@ also tells me beating them is going to be hard.
   <figcaption>Things priced at 70% happen about 70% of the time. The closer to the diagonal the better, and the prices track it well.</figcaption>
 </figure>
 
-Then the real test: can I predict the next 24-hour move from things I'd actually
+So lets start with a naive test: can I predict the next 24-hour move from things I'd actually
 know at the time? I built features that are all past-only so there's no cheating
 with the future (cumulative volume, trade count, recent volatility, the spread, how
 old the market is, how long until it resolves) and trained a simple ridge
@@ -77,10 +77,10 @@ the predictions correlate with the real move at about 0.107. That sounds tiny, a
 there's a trap in it, because I'm predicting 24 hours ahead but doing it every
 hour, so the observations overlap heavily and the 39k rows aren't anywhere near 39k
 independent points. Clustering the errors by market gives a t-stat around 4.7, so
-the signal is real. But real and tradeable aren't the same thing, which is the
-whole point. When I run the long/short backtest and actually pay the spread on the
-way in and the way out, the edge breaks even at about half the spread and loses
-money at the realistic full spread.
+the signal is real. But real and tradeable are two very different things. When I run
+the long/short backtest and actually pay the spread on the way in and the way out,
+the edge breaks even at about half the spread and loses money at the realistic full
+spread.
 
 <figure>
   <img src="/figures/polymarket-equity-curve.png" alt="Cumulative long/short PnL at 0.5x, 1x and 2x the estimated spread" loading="lazy" />
@@ -188,41 +188,99 @@ into "a real last-hour edge you can only harvest when the market is calm," which
 a condition you can actually detect, so it's worth forward-testing. But I have
 exactly one such month with real sample size, so for now it stays a maybe.
 
-While I was at it I checked two other ideas. One was that Polymarket, being
-crypto-native retail, might lag the sharp bookmakers in sports, so I tested tennis
-against Pinnacle's closing odds. It doesn't lag at all: Polymarket tracks the sharp
-line at 0.96 correlation with the same Brier score and no systematic bias, and the
-gap between them doesn't predict anything. It's as sharp as the sharpest book,
-because a liquid moneyline has an obvious reference that arbitrageurs keep aligned.
-The other idea was the opposite kind of market, tournament outrights, "Will this
-player win the whole tournament?", which is priced by retail with a clear
-favorite bias and has no single sharp line to copy, and whose fair value you can
-only get by simulating the bracket. I built an Elo model from free tennis history
-and Monte-Carlo'd the actual draw, and this one is a genuine mispricing: my model
-beats Polymarket's prices (Brier 0.125 vs 0.134), Polymarket overprices the
-contenders by about six cents, and the gap predicts the outcome with a t-stat
-around 4. Fading the overpriced favorites made +6.6% a trade after a two-cent
-spread. The catch is that it's only 35 tournaments and the outcomes are
-high-variance longshots, so the realized-profit t-stat is just 1.31, which isn't
-convincing yet. It's the same shape as the crypto result: a real signal with
-positive expected value that I can't yet prove is bankable.
+That crypto result was the only thing in the whole project that even pointed
+somewhere, and what it pointed at was bringing in outside data, so I kept going in
+that direction and tried three more markets. The first was sports, which has the
+cleanest outside reference there is, the bookmakers. Polymarket is mostly
+crypto-native retail, so my guess was that it lags the sharp books, and if its
+sports prices had drifted off a sharp line then fading toward that line should pay.
+It was also cheap to check, since tennis-data.co.uk publishes Pinnacle's closing
+odds for free. So I lined up a few hundred Polymarket tennis matches against
+Pinnacle's closing probability for the same match. There was nothing there, and it
+was a clean nothing: the two track each other almost one-for-one (correlation 0.96),
+the Brier scores are a dead heat, and the gap between them doesn't predict the
+result. Which makes sense the moment you say it out loud, because a match with a
+public sharp line is about the easiest thing on the platform to arbitrage, so
+someone already has.
 
-## So where does it land?
+The sports result had a loophole I wanted to push on, though. Individual matches
+have a clean public line, but tournament winners don't. "Will this player win the
+whole tournament?" isn't a single number anyone posts, and to price it properly you
+have to simulate the entire bracket, which is real work and exactly the kind of
+thing retail doesn't do in its head. So I built it: Elo ratings off the same free
+match history, reconstruct each tournament's draw, and Monte-Carlo the bracket a few
+thousand times to get each player's chance of winning. And for a while it looked
+great. My probabilities scored a better Brier than the market, Polymarket looked
+like it was overpricing the big favorites by around six cents, and the gap predicted
+the outcome with a t-stat around four. There was even a backtest that made money
+fading the overpriced names, and I honestly thought I'd found something and started
+writing it up that way.
 
-Every piece of this rhymes, which I didn't plan but find satisfying. Polymarket is
-efficient wherever there's an obvious reference that arbitrageurs can copy, whether
-that's its own order flow, the crypto spot price, or the sharp sports line. The only
-places I found a real edge were the non-obvious, computational mispricings, where
-you have to price option volatility or simulate a tournament bracket, something
-retail can't do in its head and no simple arb corrects. And even those two, the
-crypto options and the tournament outrights, are real signals with positive
-expected value that aren't proven profitable yet: one only shows up in calm months,
-the other needs many more tournaments. So I've built a forward paper-trader that
-takes both every time a fresh market appears, because the only honest way to know if
-an edge is real is to watch it work on data you haven't seen.
+I'm glad I didn't stop there, because it fell apart, and how it fell apart is the
+useful part. There were two plain bugs first (men's and women's events share
+tournament names, so "Wimbledon" was getting merged into one nonsensical draw, and
+the word "quarterfinals" contains "final," so my round labels were mistaking
+quarterfinals for the final), and fixing those already cut it down. But the one that
+actually killed it was subtler. I'd been using the first trade in the data as the
+pre-tournament price, the line before anyone had played. When I checked the
+timestamps, about a third of those first trades had happened after the tournament
+had already started. So for those markets I was comparing a pre-tournament model
+against a price that already knew the first-round results: the market had watched a
+top seed get upset and repriced, and my model, blind to that, looked clever for
+"predicting" something that had already happened. It was look-ahead, and it was
+basically the entire edge. Once I threw out the contaminated markets and kept only
+the ones priced genuinely before the tournament, the model and the market scored an
+identical Brier and the backtest made nothing. The mispricing I thought I'd found
+was my own leaky entry price, and that one stung because I'd let myself believe it
+for a bit.
 
-The bigger takeaway is the one the project kept handing me no matter which door I
-tried: you can't out-read a prediction market using its own data, because by
-construction it has already digested it. If you want an edge you have to know or
-compute something it doesn't. The people who make money on Polymarket know things,
-they don't read them off the screen, and for the most part neither could I.
+The last thing I tried was weather, partly because I wanted a market with a lot of
+independent events so one fluke couldn't masquerade as a signal. Polymarket runs
+daily "what's the high in this city today" markets, split into one-degree buckets,
+resolving every day across a couple dozen cities, which is hundreds of outcomes a
+month. My thesis was that retail collapses a forecast into a single number and
+overpays for the one most-likely bucket, while the real forecast has a degree or two
+of spread that the neighbouring buckets deserve, so you'd sell the center and buy
+the shoulders, pricing the true spread from a free weather ensemble. The first pass
+looked incredible and was completely wrong: the bucket prices summed to about 1.6
+instead of 1, which reads as free money, until I pulled the live order books and
+they summed to almost exactly 1. The 1.6 was stale last-trade prices on buckets that
+hadn't traded in a while. At least I caught that one before writing it up this time.
+Priced off the real book, the market is well-calibrated: its most-likely bucket was
+priced around 0.47 and won about 0.44, a three-cent gap that sits inside the spread.
+And the humbling part is that my ensemble forecast scored worse than the market, not
+better. Good temperature forecasting isn't a generic model pointed at a lat/long,
+it's bias-corrected, station-specific forecasting that the people trading these
+markets evidently already use. I showed up with a worse version of a tool the market
+already had.
+
+## So where does this leave me?
+
+If I line all of this up, the mechanical angles all landed in the same place. A
+microstructure signal, copying last period's winners, following the smart money,
+fading a sharp sports line, re-deriving a tournament bracket, pointing a generic
+weather model at free data, every one of them was either already in the price or
+turned out to be a bug or a leak once I looked hard enough. Twice I got far enough to
+half-believe a result before catching that it was a stale feed or a look-ahead in my
+own data, and I think that's a more useful lesson than any single number: the real
+failure mode in this kind of work isn't "there's no edge," it's "there's a fake edge
+you've talked yourself into." So the careful way to put what I found is just that
+with public data and off-the-shelf models I couldn't find a durable, tradeable edge,
+and each time it failed I could point at a specific, checkable reason why.
+
+What I don't want to do is turn that into the cocky version, "I couldn't find an
+edge, so the market must be efficient." That doesn't follow, and I don't actually
+believe it. The skilled tail from the smart-money test is proof enough that an edge
+exists, since a small group beats this market over and over and keeps the money.
+What my results really say is narrower than "it's efficient": the edge just isn't
+lying around in the obvious places. It isn't a microstructure signal, it isn't
+copy-trading the winners, it isn't a sharp line that's drifted, and it isn't a
+generic model pointed at free data, because those are all either already priced in or
+a trap. Whatever the winners actually have is harder to copy than any of that:
+specific knowledge, or research on one particular market that nobody else bothered to
+do, or just being early. And that's the part I haven't really tested, because I spent
+this whole project hunting for a rule that works across markets, and what the data
+keeps quietly pointing at is that the money, if it's anywhere, is in the specifics,
+one market at a time, earned with actual work instead of a formula. So I'd rather
+leave this with the door open than pretend I've shown the room is empty. I think I've
+shown that the easy doors are locked. I haven't walked all the hard ones yet.
